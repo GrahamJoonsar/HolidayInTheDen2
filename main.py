@@ -2,6 +2,8 @@ import pygame
 import math
 import random
 
+DEBUG = True
+
 # Window Setup
 """ THESE DIMENSIONS MIGHT NEED TO BE CHANGED """
 window_width = 1366
@@ -16,13 +18,13 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 8
+num_players = 1
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
-#if pygame.joystick.get_count() != num_players:
-#    print("ERROR: Incorrect number of joysticks")
-#    print("There are only " + str(pygame.joystick.get_count()) + " joysticks.")
+if pygame.joystick.get_count() != num_players:
+    print("ERROR: Incorrect number of joysticks")
+    print("There are only " + str(pygame.joystick.get_count()) + " joysticks.")
 
 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 
@@ -55,14 +57,18 @@ class Player(pygame.sprite.Sprite):
 
         # Game stuff
         self.side = side
-        self.number = 0
+        self.number = 0 #number
         self.x_vel = 0
         self.y_vel = 0
+        self.radius = 37
 
     def update(self, other_players):
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
 
+        next_x = self.rect.centerx + self.x_vel
+        next_y = self.rect.centery + self.y_vel
+        
         self.rect.centerx += self.x_vel
         self.rect.centery += self.y_vel
 
@@ -87,13 +93,10 @@ class Snowball(pygame.sprite.Sprite):
                         #p.on_hit()
                         self.on_hit()
 
-    def check_collisions(self, p):
-        x = self.x - p.rect.centerx
-        y = self.y - p.rect.centery
-        dist = math.sqrt(x * x + y * y)
-        if dist <= self.radius + p.radius:
-            return True
-        return False
+    def check_collisions(self, player):
+        x = self.x - player.rect.centerx
+        y = self.y - player.rect.centery
+        return x*x + y*y <= (self.radius + player.radius)**2
 
     def on_hit(self):
         self.enabled = False
@@ -127,6 +130,10 @@ while running:
                 running = False
 
     win.fill((140, 140, 255))
+
+    if DEBUG:
+        for player in player_list:
+            pygame.draw.circle(win, (0, 255, 30), (player.rect.centerx, player.rect.centery), player.radius)
     
     player_list.draw(win)
     player_list.update(player_list)
