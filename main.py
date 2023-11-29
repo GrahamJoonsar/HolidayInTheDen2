@@ -37,3 +37,21 @@ colors = [(255, 0, 0, 255),
           (255, 100, 100, 255), 
           (165, 42, 42, 255)
 ]
+
+# Main Loop (Press ESC to force quit)
+running = True
+while running:
+    # Event processing
+    pygame.time.delay(10)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+
+    win.fill((140, 140, 255))
+
+    pygame.display.update()
+
+pygame.quit()
