@@ -67,10 +67,36 @@ class Player(pygame.sprite.Sprite):
         self.rect.centery += self.y_vel
 
 class Snowball(pygame.sprite.Sprite):
+    speed = 1
+    radius = 8
     def __init__(self, x, y, side):
         self.x = x
         self.y = y
         self.side = side
+        self.enabled = True
+    
+    def update(self):
+        if enabled:
+            if self.side == LEFT:
+                self.x += speed
+            else:
+                self.x -= speed
+            for p in player_list:
+                if p.side != self.side:
+                    if self.check_collisions(p):
+                        #p.on_hit()
+                        self.on_hit()
+
+    def check_collisions(self, p):
+        x = self.x - p.rect.centerx
+        y = self.y - p.rect.centery
+        dist = math.sqrt(x * x + y * y)
+        if dist <= self.radius + p.radius:
+            return True
+        return False
+
+    def on_hit(self):
+        self.enabled = False
 
 class Barrier(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h):
