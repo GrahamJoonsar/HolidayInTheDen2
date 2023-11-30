@@ -76,17 +76,20 @@ class Snowball(pygame.sprite.Sprite):
     speed = 1
     radius = 8
     def __init__(self, x, y, side):
-        self.x = x
-        self.y = y
+        # Pygame and image stuff
+        pygame.sprite.Sprite.__init__(self)
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (x, y)
         self.side = side
         self.enabled = True
     
     def update(self):
         if enabled:
             if self.side == LEFT:
-                self.x += speed
+                self.rect.centerx += speed
             else:
-                self.x -= speed
+                self.rect.centerx -= speed
             for p in player_list:
                 if p.side != self.side:
                     if self.check_collisions(p):
@@ -94,8 +97,8 @@ class Snowball(pygame.sprite.Sprite):
                         self.on_hit()
 
     def check_collisions(self, player):
-        x = self.x - player.rect.centerx
-        y = self.y - player.rect.centery
+        x = self.rect.centerx - player.rect.centerx
+        y = self.rect.centery - player.rect.centery
         return x*x + y*y <= (self.radius + player.radius)**2
 
     def on_hit(self):
