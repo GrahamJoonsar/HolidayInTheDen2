@@ -17,7 +17,7 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 2
+num_players = 8
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
@@ -136,14 +136,14 @@ class Barrier(pygame.sprite.Sprite):
 
 player_img_list = []
 for i in range(1, 9):
-    player_img_list.append(pygame.image.load("imgs/" + str(i) + ".png").convert_alpha())
+    player_img_list.append(pygame.transform.rotate(pygame.image.load("imgs/" + str(i) + ".png").convert_alpha(), -90*(2*(i%2)-1)))
 player_list = pygame.sprite.Group()
 
 # Generating the players
 for i in range(num_players):
     x = window_width/2 + ((i%2)*2-1)*window_width/4
     y = window_height/(num_players+2) * (i+1)
-    player_list.add(Player(x, y, 0, i, player_img_list[i]))
+    player_list.add(Player(x, y, i%2, i, player_img_list[i]))
 
 # Main Loop (Press ESC to force quit)
 running = True
