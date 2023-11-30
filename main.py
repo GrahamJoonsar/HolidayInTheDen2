@@ -121,9 +121,7 @@ class Snowball(pygame.sprite.Sprite):
                         self.on_hit()
 
     def check_collisions(self, player):
-        x = self.rect.centerx - player.rect.centerx
-        y = self.rect.centery - player.rect.centery
-        return x*x + y*y <= (self.radius + player.radius)**2
+        return within(self.rect.centerx, self.rect.centery, player.rect.centerx, player.rect.centery, self.radius+player.radius)
 
     def on_hit(self):
         self.enabled = False
