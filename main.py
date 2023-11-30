@@ -18,7 +18,7 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 1
+num_players = 2
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
@@ -44,6 +44,14 @@ colors = [(255, 0, 0, 255),
 LEFT = 0
 RIGHT = 1
 
+def within(x1, y1, x2, y2, dist):
+    return (x1-x2)**2 + (y1-y2)**2 <= dist*dist
+
+def in_bounds(x, y, r, side):
+    x_check = r + side*window_width/2 <= x and x <= window_width-r - (1-side)*window_width/2
+    y_check = r <= y and y <= window_height-r
+    return x_check and y_check
+
 # The player class, who throw snowballs
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, side, number, image):
@@ -57,7 +65,7 @@ class Player(pygame.sprite.Sprite):
 
         # Game stuff
         self.side = side
-        self.number = 0 #number
+        self.number = number
         self.x_vel = 0
         self.y_vel = 0
         self.radius = 37
@@ -68,9 +76,25 @@ class Player(pygame.sprite.Sprite):
 
         next_x = self.rect.centerx + self.x_vel
         next_y = self.rect.centery + self.y_vel
+
+        # Player Collisions
+        #for player in other_players:
+            
         
-        self.rect.centerx += self.x_vel
-        self.rect.centery += self.y_vel
+        # Boundary Collisions (Perfect)
+        if not in_bounds(next_x, self.rect.centery, self.radius, self.side):
+            if self.x_vel < 0:
+                next_x = self.radius + self.side*window_width/2
+            elif self.x_vel > 0:
+                next_x = window_width/2 + self.side*window_width/2 - self.radius
+        if not in_bounds(self.rect.centerx, next_y, self.radius, self.side):
+            if self.y_vel < 0:
+                next_y = self.radius
+            elif self.y_vel > 0:
+                next_y = window_height - self.radius
+        
+        self.rect.centerx = next_x
+        self.rect.centery = next_y
 
 class Snowball(pygame.sprite.Sprite):
     speed = 1
@@ -118,7 +142,7 @@ player_list = pygame.sprite.Group()
 for i in range(num_players):
     x = window_width/2 + ((i%2)*2-1)*window_width/4
     y = window_height/(num_players+2) * (i+1)
-    player_list.add(Player(x, y, i%2, i, player_img))
+    player_list.add(Player(x, y, 0, i, player_img))
 
 # Main Loop (Press ESC to force quit)
 running = True
