@@ -1,7 +1,7 @@
 import pygame 
 import math
 
-DEBUG = True
+DEBUG = False
 
 # Window Setup
 """ THESE DIMENSIONS MIGHT NEED TO BE CHANGED """
@@ -56,7 +56,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, side, number, image):
         # Pygame and image stuff
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(image, (75, 75))
+        self.image = pygame.transform.scale(image, (185, 185))
         self.rect = self.image.get_rect()
 
         self.rect.center = (x, y)
@@ -67,7 +67,7 @@ class Player(pygame.sprite.Sprite):
         self.number = number
         self.x_vel = 0
         self.y_vel = 0
-        self.radius = 37
+        self.radius = 30
 
     def update(self, other_players):
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
@@ -85,14 +85,14 @@ class Player(pygame.sprite.Sprite):
         
         # Boundary Collisions (Perfect)
         if not in_bounds(next_x, self.rect.centery, self.radius, self.side):
-            if self.x_vel < 0:
+            if next_x - self.rect.centerx < 0:
                 next_x = self.radius + self.side*window_width/2
-            elif self.x_vel > 0:
+            elif next_x - self.rect.centerx > 0:
                 next_x = window_width/2 + self.side*window_width/2 - self.radius
         if not in_bounds(self.rect.centerx, next_y, self.radius, self.side):
-            if self.y_vel < 0:
+            if next_y - self.rect.centery < 0:
                 next_y = self.radius
-            elif self.y_vel > 0:
+            elif next_y - self.rect.centery > 0:
                 next_y = window_height - self.radius
         
         self.rect.centerx = next_x
@@ -134,14 +134,16 @@ class Barrier(pygame.sprite.Sprite):
         self.w = w
         self.h = h
 
-player_img = pygame.image.load("player.png").convert_alpha()
+player_img_list = []
+for i in range(1, 9):
+    player_img_list.append(pygame.image.load("imgs/" + str(i) + ".png").convert_alpha())
 player_list = pygame.sprite.Group()
 
 # Generating the players
 for i in range(num_players):
     x = window_width/2 + ((i%2)*2-1)*window_width/4
     y = window_height/(num_players+2) * (i+1)
-    player_list.add(Player(x, y, 0, i, player_img))
+    player_list.add(Player(x, y, 0, i, player_img_list[i]))
 
 # Main Loop (Press ESC to force quit)
 running = True
