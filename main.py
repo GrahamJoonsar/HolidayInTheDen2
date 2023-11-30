@@ -1,6 +1,5 @@
 import pygame 
 import math
-import random
 
 DEBUG = True
 
@@ -45,7 +44,7 @@ LEFT = 0
 RIGHT = 1
 
 def within(x1, y1, x2, y2, dist):
-    return (x1-x2)**2 + (y1-y2)**2 <= dist*dist
+    return (x1-x2)**2 + (y1-y2)**2 < dist*dist
 
 def in_bounds(x, y, r, side):
     x_check = r + side*window_width/2 <= x and x <= window_width-r - (1-side)*window_width/2
@@ -78,8 +77,11 @@ class Player(pygame.sprite.Sprite):
         next_y = self.rect.centery + self.y_vel
 
         # Player Collisions
-        #for player in other_players:
-            
+        for other in other_players:
+            if within(next_x, next_y, other.rect.centerx, other.rect.centery, self.radius + other.radius) and other.number != self.number:
+                angle = math.atan2(next_y - other.rect.centery, next_x - other.rect.centerx)
+                next_x = other.rect.centerx + (self.radius + other.radius)*math.cos(angle)
+                next_y = other.rect.centery + (self.radius + other.radius)*math.sin(angle)
         
         # Boundary Collisions (Perfect)
         if not in_bounds(next_x, self.rect.centery, self.radius, self.side):
