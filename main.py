@@ -1,5 +1,6 @@
 import pygame 
 import math
+import time
 
 DEBUG = True
 
@@ -17,7 +18,8 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 2
+num_players = 1
+throwing_cooldown = 1
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
@@ -68,10 +70,14 @@ class Player(pygame.sprite.Sprite):
         self.x_vel = 0
         self.y_vel = 0
         self.radius = 37
+        self.last_thrown = 0
 
     def update(self, other_players):
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
+        if pygame.joystick.Joystick(self.number).get_button(2) and self.last_thrown + throwing_cooldown < time.time():
+            self.last_thrown = time.time()
+            snowball_list.add(Snowball(self.rect.centerx, self.rect.centery, self.side, snowball_img))
 
         next_x = self.rect.centerx + self.x_vel
         next_y = self.rect.centery + self.y_vel
@@ -99,27 +105,28 @@ class Player(pygame.sprite.Sprite):
         self.rect.centery = next_y
 
 class Snowball(pygame.sprite.Sprite):
-    speed = 1
+    speed = 10
     radius = 8
-    def __init__(self, x, y, side):
+    def __init__(self, x, y, side, img):
         # Pygame and image stuff
         pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (75, 75))
         self.rect = self.image.get_rect()
 
         self.rect.center = (x, y)
         self.side = side
         self.enabled = True
     
-    def update(self):
-        if enabled:
+    def update(self, players):
+        if self.enabled:
             if self.side == LEFT:
-                self.rect.centerx += speed
+                self.rect.centerx += self.speed
             else:
-                self.rect.centerx -= speed
-            for p in player_list:
+                self.rect.centerx -= self.speed
+            for p in players:
                 if p.side != self.side:
                     if self.check_collisions(p):
-                        #p.on_hit()
+                        p.on_hit()
                         self.on_hit()
 
     def check_collisions(self, player):
@@ -137,6 +144,8 @@ class Barrier(pygame.sprite.Sprite):
 
 player_img = pygame.image.load("player.png").convert_alpha()
 player_list = pygame.sprite.Group()
+snowball_img = pygame.image.load("snowball.png").convert_alpha()
+snowball_list = pygame.sprite.Group()
 
 # Generating the players
 for i in range(num_players):
@@ -164,6 +173,8 @@ while running:
     
     player_list.draw(win)
     player_list.update(player_list)
+    snowball_list.update(player_list)
+    snowball_list.draw(win)
 
     pygame.display.update()
 
