@@ -1,7 +1,8 @@
 import pygame 
 import math
+import time
 
-DEBUG = False
+DEBUG = True
 
 # Window Setup
 """ THESE DIMENSIONS MIGHT NEED TO BE CHANGED """
@@ -18,10 +19,11 @@ pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
 num_players = 8
+throwing_cooldown = 1
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
-if pygame.joystick.get_count() != num_players:
+if pygame.joystick.get_count() != num_players and not DEBUG:
     print("ERROR: Incorrect number of joysticks")
     print("There are only " + str(pygame.joystick.get_count()) + " joysticks.")
 
@@ -68,10 +70,14 @@ class Player(pygame.sprite.Sprite):
         self.x_vel = 0
         self.y_vel = 0
         self.radius = 30
+        self.last_thrown = 0
 
     def update(self, other_players):
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
+        if pygame.joystick.Joystick(self.number).get_button(2) and self.last_thrown + throwing_cooldown < time.time():
+            self.last_thrown = time.time()
+            snowball_list.add(Snowball(self.rect.centerx, self.rect.centery, self.side, snowball_img))
 
         next_x = self.rect.centerx + self.x_vel
         next_y = self.rect.centery + self.y_vel
@@ -98,34 +104,42 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = next_x
         self.rect.centery = next_y
 
+    def on_hit(self):
+        return
+
 class Snowball(pygame.sprite.Sprite):
-    speed = 1
+    speed = 10
     radius = 8
-    def __init__(self, x, y, side):
-        self.x = x
-        self.y = y
+    def __init__(self, x, y, side, img):
+        # Pygame and image stuff
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (75, 75))
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (x, y)
         self.side = side
         self.enabled = True
     
-    def update(self):
-        if enabled:
-            if self.side == LEFT:
-                self.x += speed
-            else:
-                self.x -= speed
-            for p in player_list:
-                if p.side != self.side:
-                    if self.check_collisions(p):
-                        #p.on_hit()
-                        self.on_hit()
+    def update(self, players):
+        if self.side == LEFT:
+            self.rect.centerx += self.speed
+        else:
+            self.rect.centerx -= self.speed
+        for p in players:
+            if p.side != self.side:
+                if self.check_collisions(p):
+                    p.on_hit()
+                    self.on_hit()
+        if not in_bounds(self.rect.centerx, self.rect.centery, -self.radius, self.side) and not in_bounds(self.rect.centerx, self.rect.centery, -self.radius, RIGHT if self.side==LEFT else LEFT):
+            snowball_list.remove(self)
+            del self
 
     def check_collisions(self, player):
-        x = self.x - player.rect.centerx
-        y = self.y - player.rect.centery
-        return x*x + y*y <= (self.radius + player.radius)**2
+        return within(self.rect.centerx, self.rect.centery, player.rect.centerx, player.rect.centery, self.radius+player.radius)
 
     def on_hit(self):
-        self.enabled = False
+        snowball_list.remove(self)
+        del self
 
 class Barrier(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h):
@@ -138,12 +152,14 @@ player_img_list = []
 for i in range(1, 9):
     player_img_list.append(pygame.transform.rotate(pygame.image.load("imgs/" + str(i) + ".png").convert_alpha(), -90*(2*(i%2)-1)))
 player_list = pygame.sprite.Group()
+snowball_img = pygame.image.load("snowball.png").convert_alpha()
+snowball_list = pygame.sprite.Group()
 
 # Generating the players
 for i in range(num_players):
     x = window_width/2 + ((i%2)*2-1)*window_width/4
     y = window_height/(num_players+2) * (i+1)
-    player_list.add(Player(x, y, i%2, i, player_img_list[i]))
+    player_list.add(Player(x, y, i%2, 0 if DEBUG else i, player_img_list[i]))
 
 # Main Loop (Press ESC to force quit)
 running = True
@@ -162,9 +178,12 @@ while running:
     if DEBUG:
         for player in player_list:
             pygame.draw.circle(win, (0, 255, 30), (player.rect.centerx, player.rect.centery), player.radius)
+        print("snowball count = " + str(len(snowball_list.sprites())), end=" \r")
     
     player_list.draw(win)
     player_list.update(player_list)
+    snowball_list.update(player_list)
+    snowball_list.draw(win)
 
     pygame.display.update()
 
