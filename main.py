@@ -75,8 +75,19 @@ class Player(pygame.sprite.Sprite):
         self.y_vel = 0
         self.radius = 30
         self.last_thrown = 0
+        # self.invisible should NOT be relied upon for checking status
+        self.invisible = False
 
     def update(self, other_players, rect_bars, circ_bars):
+        if self.invisible:
+            self.rect.centerx = -self.rect.centerx
+            self.rect.centery = -self.rect.centery
+        if self.last_thrown < time.time():
+            self.invisible = False
+        else:
+            # achieves flashing effect
+            self.invisible = (self.last_thrown - time.time()) % 1 > 0.5
+
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
         if pygame.joystick.Joystick(self.number).get_button(2) and self.last_thrown + throwing_cooldown < time.time():
@@ -121,12 +132,21 @@ class Player(pygame.sprite.Sprite):
         
         self.rect.centerx = next_x
         self.rect.centery = next_y
+        if self.invisible:
+            self.rect.centerx = -self.rect.centerx
+            self.rect.centery = -self.rect.centery
 
     def on_hit(self):
+        self.last_thrown = time.time() + 3
+        self.invisible = True
+        self.rect.centerx = -self.rect.centerx
+        self.rect.centery = -self.rect.centery
+  
         if self.side == LEFT:
             right_score += 1
         elif self.side == RIGHT:
             left_score += 1
+
 
 class Snowball(pygame.sprite.Sprite):
     speed = 10
@@ -151,12 +171,21 @@ class Snowball(pygame.sprite.Sprite):
                 if self.check_collisions(p):
                     p.on_hit()
                     self.on_hit()
+        for barrier in rectangle_list:
+            if self.check_barriers(barrier):
+                self.on_hit()
+        for barrier in circle_list:
+            if self.check_barriers(barrier):
+                self.on_hit()
         if not in_bounds(self.rect.centerx, self.rect.centery, -self.radius, self.side) and not in_bounds(self.rect.centerx, self.rect.centery, -self.radius, RIGHT if self.side==LEFT else LEFT):
             snowball_list.remove(self)
             del self
 
     def check_collisions(self, player):
         return within(self.rect.centerx, self.rect.centery, player.rect.centerx, player.rect.centery, self.radius+player.radius)
+
+    def check_barriers(self, barrier):
+        return barrier.intersects(self.rect.centerx, self.rect.centery, self.radius)
 
     def on_hit(self):
         snowball_list.remove(self)
