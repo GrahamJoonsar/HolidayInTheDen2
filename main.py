@@ -16,14 +16,14 @@ pygame.display.set_caption("Snowball Fight!")
 
 # Initializing the font, we may have to change the font size
 pygame.font.init()
-font = pygame.font.SysFont('Comic Sans MS', 30)
-left_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+font = pygame.font.Font(pygame.font.match_font("slkscr.ttf", 0, 0), 90)
+left_text = font.render("0", True, (255, 255, 255), (0, 0, 255))
 left_rect = left_text.get_rect()
-left_rect.center = (window_width/4, 20)
+left_rect.center = (window_width/10, 35)
 
-right_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+right_text = font.render("0", True, (255, 255, 255), (255, 0, 0))
 right_rect = right_text.get_rect()
-right_rect.center = (3*window_width/4, 20)
+right_rect.center = (9*window_width/10, 35)
 
 num_players = 8
 throwing_cooldown = 1
@@ -48,6 +48,8 @@ colors = [(255, 0, 0, 255),
           (165, 42, 42, 255)
 ]
 
+
+game_paused = False
 
 # Sides for the game
 LEFT = 0
@@ -170,12 +172,12 @@ class Player(pygame.sprite.Sprite):
             self.invisible = True
             if self.side == LEFT:
                 right_score += 1
-                right_text = font.render(str(right_score), True, (255, 255, 255), (0, 0, 0))
-                right_rect.center = (3*window_width/4, 20)
+                right_text = font.render(str(right_score), True, (255, 255, 255), (255, 0, 0))
+                right_rect.center = (9*window_width/10, 35)
             elif self.side == RIGHT:
                 left_score += 1
-                left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 0))
-                left_rect.center = (window_width/4, 20)
+                left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 255))
+                left_rect.center = (window_width/10, 35)
 
         self.last_thrown = time.time() + 3
 
@@ -277,6 +279,27 @@ for i in range(num_players):
     y = window_height/(num_players+2) * (i+1)
     player_list.add(Player(x, y, i%2, 0 if DEBUG else i, player_img_list[i]))
 
+def reset_game():
+    global left_score, right_score, left_text, right_text, left_rect, right_rect
+    i = 0
+    for player in player_list:
+        x = window_width/2 + ((i%2)*2-1)*window_width/4
+        y = window_height/(num_players+2) * (i+1)
+        player.rect.center = (x, y)
+        i += 1
+
+    right_score = 0
+    right_text = font.render(str(right_score), True, (255, 255, 255), (255, 0, 0))
+    right_rect.center = (9*window_width/10, 35)
+
+    left_score = 0
+    left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 255))
+    left_rect.center = (window_width/10, 35)
+
+    for s in snowball_list:
+        s.on_hit()
+    
+
 # Main Loop (Press ESC to force quit)
 running = True
 while running:
@@ -288,6 +311,10 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
+            elif event.key == pygame.K_p:
+                game_paused = not game_paused
+            elif event.key == pygame.K_r:
+                reset_game()
 
     win.fill((240, 255, 255))
     pygame.draw.line(win, (20, 120, 255), (window_width/2, 0), (window_width/2, window_height))
@@ -296,14 +323,17 @@ while running:
         for player in player_list:
             pygame.draw.circle(win, (0, 255, 30), (player.rect.centerx, player.rect.centery), player.radius)
         #print("snowball count = " + str(len(snowball_list.sprites())), end=" \r")
-    
+
+    # Drawing all of the objects
     player_list.draw(win)
-    player_list.update(player_list, rectangle_list, circle_list)
-    snowball_list.update(player_list)
     snowball_list.draw(win)
     rectangle_list.draw(win)
 
     countdown_update()
+    # Updating all of the objects
+    if not game_paused:
+        player_list.update(player_list, rectangle_list, circle_list)
+        snowball_list.update(player_list)
 
     win.blit(left_text, left_rect)
     win.blit(right_text, right_rect)
