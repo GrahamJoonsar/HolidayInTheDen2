@@ -2,7 +2,7 @@ import pygame
 import math
 import time
 
-DEBUG = False
+DEBUG = True
 
 # Window Setup
 """ THESE DIMENSIONS MIGHT NEED TO BE CHANGED """
@@ -27,6 +27,7 @@ right_rect.center = (3*window_width/4, 20)
 
 num_players = 8
 throwing_cooldown = 1
+game_duration = 120
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
@@ -55,6 +56,17 @@ RIGHT = 1
 # Point tracker
 left_score = 0
 right_score = 0
+
+game_end = time.time() + game_duration
+time_text = 0
+time_rect = 0
+
+def countdown_update():
+    global time_text, time_rect
+    time_text = font.render(str(int(game_end - time.time())), True, (255, 255, 255), (0, 0, 0))
+    time_rect = time_text.get_rect()
+    time_rect.center = (window_width/2, 20)
+
 
 def within(x1, y1, x2, y2, dist):
     return (x1-x2)**2 + (y1-y2)**2 < dist*dist
@@ -291,8 +303,11 @@ while running:
     snowball_list.draw(win)
     rectangle_list.draw(win)
 
+    countdown_update()
+
     win.blit(left_text, left_rect)
     win.blit(right_text, right_rect)
+    win.blit(time_text, time_rect)
 
     pygame.display.update()
 
