@@ -2,7 +2,7 @@ import pygame
 import math
 import time
 
-DEBUG = True
+DEBUG = False
 
 # Window Setup
 """ THESE DIMENSIONS MIGHT NEED TO BE CHANGED """
@@ -18,7 +18,7 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 2
+num_players = 8
 throwing_cooldown = 1
 
 # Initializing the joysticks, there should be 8 for 8 players
@@ -44,6 +44,10 @@ colors = [(255, 0, 0, 255),
 # Sides for the game
 LEFT = 0
 RIGHT = 1
+
+# Point tracker
+left_score = 0
+right_score = 0
 
 def within(x1, y1, x2, y2, dist):
     return (x1-x2)**2 + (y1-y2)**2 < dist*dist
@@ -137,7 +141,12 @@ class Player(pygame.sprite.Sprite):
         self.invisible = True
         self.rect.centerx = -self.rect.centerx
         self.rect.centery = -self.rect.centery
-        return
+  
+        if self.side == LEFT:
+            right_score += 1
+        elif self.side == RIGHT:
+            left_score += 1
+
 
 class Snowball(pygame.sprite.Sprite):
     speed = 10
