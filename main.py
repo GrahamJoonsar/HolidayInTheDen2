@@ -18,7 +18,7 @@ pygame.display.set_caption("Snowball Fight!")
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-num_players = 8
+num_players = 2
 throwing_cooldown = 1
 
 # Initializing the joysticks, there should be 8 for 8 players
@@ -74,7 +74,7 @@ class Player(pygame.sprite.Sprite):
         # self.invisible should NOT be relied upon for checking status
         self.invisible = False
 
-    def update(self, other_players):
+    def update(self, other_players, rect_bars, circ_bars):
         if self.invisible:
             self.rect.centerx = -self.rect.centerx
             self.rect.centery = -self.rect.centery
@@ -99,6 +99,20 @@ class Player(pygame.sprite.Sprite):
                 angle = math.atan2(next_y - other.rect.centery, next_x - other.rect.centerx)
                 next_x = other.rect.centerx + (self.radius + other.radius)*math.cos(angle)
                 next_y = other.rect.centery + (self.radius + other.radius)*math.sin(angle)
+
+        # Barrier Collisions
+        for rect in rect_bars:
+            if rect.intersects(next_x, self.rect.centery, self.radius):
+                next_x = self.rect.centerx
+            if rect.intersects(self.rect.centerx, next_y, self.radius):
+                next_y = self.rect.centery
+
+        for circ in circ_bars:
+            if circ.intersects(next_x, next_y, self.radius):
+                angle = math.atan2(next_y - circ.rect.centery, next_x - circ.rect.centerx)
+                next_x = circ.rect.centerx + (self.radius + circ.radius)*math.cos(angle)
+                next_y = circ.rect.centery + (self.radius + circ.radius)*math.sin(angle)
+            
         
         # Boundary Collisions (Perfect)
         if not in_bounds(next_x, self.rect.centery, self.radius, self.side):
@@ -159,19 +173,54 @@ class Snowball(pygame.sprite.Sprite):
         snowball_list.remove(self)
         del self
 
-class Barrier(pygame.sprite.Sprite):
-    def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
+class Circle_Barrier(pygame.sprite.Sprite):
+    def __init__(self, x, y, r, image):
+        # Pygame and image stuff
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(image, (185, 185))
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (x, y)
+        self.radius = r
+
+    def intersects(self, x_pos, y_pos, radius):
+        return within(self.rect.centerx, self.rect.centery, x_pos, y_pos, radius + self.radius)
+
+class Rectangle_Barrier(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h, image):
+        # Pygame and image stuff
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(image, (185, 185))
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (x, y)
         self.w = w
         self.h = h
 
+    def intersects(self, x_pos, y_pos, radius):
+        return (abs(self.rect.centerx - x_pos) < radius + self.w) and (abs(self.rect.centery - y_pos) < radius + self.h)
+        
+        
+# Players
 player_img_list = []
 for i in range(1, 9):
     player_img_list.append(pygame.transform.rotate(pygame.image.load("imgs/" + str(i) + ".png").convert_alpha(), -90*(2*(i%2)-1)))
 player_list = pygame.sprite.Group()
+
+# Snowballs
 snowball_img = pygame.image.load("snowball.png").convert_alpha()
 snowball_list = pygame.sprite.Group()
+
+# Barriers
+wall_img = pygame.image.load("imgs/wall.png").convert_alpha()
+tree_img = pygame.image.load("imgs/tree.png").convert_alpha()
+igloo_img = pygame.image.load("imgs/igloo.png").convert_alpha()
+
+rectangle_list = pygame.sprite.Group()
+rectangle_list.add(Rectangle_Barrier(window_width/3, window_height/2, 15, 67, wall_img))
+rectangle_list.add(Rectangle_Barrier(2*window_width/3, window_height/2, 15, 67, wall_img))
+
+circle_list = pygame.sprite.Group()
 
 # Generating the players
 for i in range(num_players):
@@ -191,17 +240,19 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 running = False
 
-    win.fill((140, 140, 255))
+    win.fill((240, 255, 255))
+    pygame.draw.line(win, (20, 120, 255), (window_width/2, 0), (window_width/2, window_height))
 
     if DEBUG:
         for player in player_list:
             pygame.draw.circle(win, (0, 255, 30), (player.rect.centerx, player.rect.centery), player.radius)
-        print("snowball count = " + str(len(snowball_list.sprites())), end=" \r")
+        #print("snowball count = " + str(len(snowball_list.sprites())), end=" \r")
     
     player_list.draw(win)
-    player_list.update(player_list)
+    player_list.update(player_list, rectangle_list, circle_list)
     snowball_list.update(player_list)
     snowball_list.draw(win)
+    rectangle_list.draw(win)
 
     pygame.display.update()
 
