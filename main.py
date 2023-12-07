@@ -27,6 +27,7 @@ right_rect.center = (9*window_width/10, 35)
 
 num_players = 8
 throwing_cooldown = 1
+game_duration = 121
 
 # Initializing the joysticks, there should be 8 for 8 players
 pygame.joystick.init()
@@ -57,6 +58,28 @@ RIGHT = 1
 # Point tracker
 left_score = 0
 right_score = 0
+
+game_end = time.time() + game_duration
+time_text = 0
+time_rect = 0
+time_paused = 0
+
+def countdown_update():
+    global time_text, time_rect, game_paused
+    time_text = font.render(str(int(game_end - time.time())), True, (255, 255, 255), (0, 0, 0))
+    time_rect = time_text.get_rect()
+    time_rect.center = (window_width/2, 35)
+    if game_end < time.time():
+        game_paused = True
+        countdown_pause()
+
+def countdown_pause():
+    global time_paused
+    time_paused = time.time()
+
+def countdown_resume():
+    global game_end, time_paused
+    game_end = game_end - time_paused + time.time()
 
 def within(x1, y1, x2, y2, dist):
     return (x1-x2)**2 + (y1-y2)**2 < dist*dist
@@ -268,7 +291,7 @@ for i in range(num_players):
     player_list.add(Player(x, y, i%2, 0 if DEBUG else i, player_img_list[i]))
 
 def reset_game():
-    global left_score, right_score, left_text, right_text, left_rect, right_rect
+    global left_score, right_score, left_text, right_text, left_rect, right_rect, game_end
     i = 0
     for player in player_list:
         x = window_width/2 + ((i%2)*2-1)*window_width/4
@@ -287,6 +310,9 @@ def reset_game():
     for s in snowball_list:
         s.on_hit()
     
+    game_end = game_duration + time.time()
+    countdown_pause()
+    countdown_update()
 
 # Main Loop (Press ESC to force quit)
 running = True
@@ -301,6 +327,10 @@ while running:
                 running = False
             elif event.key == pygame.K_p:
                 game_paused = not game_paused
+                if game_paused:
+                    countdown_pause()
+                else:
+                    countdown_resume()
             elif event.key == pygame.K_r:
                 reset_game()
 
@@ -321,9 +351,11 @@ while running:
     if not game_paused:
         player_list.update(player_list, rectangle_list, circle_list)
         snowball_list.update(player_list)
+        countdown_update()
 
     win.blit(left_text, left_rect)
     win.blit(right_text, right_rect)
+    win.blit(time_text, time_rect)
 
     pygame.display.update()
 
