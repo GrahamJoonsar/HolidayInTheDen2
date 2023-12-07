@@ -105,9 +105,12 @@ class Player(pygame.sprite.Sprite):
 
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
-        if pygame.joystick.Joystick(self.number).get_button(2) and self.last_thrown + throwing_cooldown < time.time():
-            self.last_thrown = time.time()
-            snowball_list.add(Snowball(self.rect.centerx, self.rect.centery, self.side, snowball_img))
+        if self.last_thrown + throwing_cooldown < time.time():
+            for button in [0, 1, 2, 3, 4, 5, 8, 9]:
+                if pygame.joystick.Joystick(self.number).get_button(button):
+                    self.last_thrown = time.time()
+                    snowball_list.add(Snowball(self.rect.centerx, self.rect.centery, self.side, snowball_img))
+                    break
 
         next_x = self.rect.centerx + self.x_vel
         next_y = self.rect.centery + self.y_vel
@@ -166,7 +169,7 @@ class Player(pygame.sprite.Sprite):
 
 
 class Snowball(pygame.sprite.Sprite):
-    speed = 10
+    speed = 13
     radius = 8
     def __init__(self, x, y, side, img):
         # Pygame and image stuff
@@ -176,7 +179,6 @@ class Snowball(pygame.sprite.Sprite):
 
         self.rect.center = (x, y)
         self.side = side
-        self.enabled = True
     
     def update(self, players):
         if self.side == LEFT:
