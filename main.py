@@ -16,7 +16,14 @@ pygame.display.set_caption("Snowball Fight!")
 
 # Initializing the font, we may have to change the font size
 pygame.font.init()
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
+font = pygame.font.SysFont('Comic Sans MS', 30)
+left_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+left_rect = left_text.get_rect()
+left_rect.center = (window_width/4, 20)
+
+right_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+right_rect = right_text.get_rect()
+right_rect.center = (3*window_width/4, 20)
 
 num_players = 8
 throwing_cooldown = 1
@@ -142,14 +149,20 @@ class Player(pygame.sprite.Sprite):
         self.rect.centery = next_y
 
     def on_hit(self):
-        global left_score, right_score
+        global left_score, right_score, left_text, right_text, left_rect, right_rect
+
+        if time.time() - self.last_thrown > 3:
+            self.invisible = True
+            if self.side == LEFT:
+                right_score += 1
+                right_text = font.render(str(right_score), True, (255, 255, 255), (0, 0, 0))
+                right_rect.center = (3*window_width/4, 20)
+            elif self.side == RIGHT:
+                left_score += 1
+                left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 0))
+                left_rect.center = (window_width/4, 20)
+
         self.last_thrown = time.time() + 3
-        self.invisible = True
-  
-        if self.side == LEFT:
-            right_score += 1
-        elif self.side == RIGHT:
-            left_score += 1
 
 
 class Snowball(pygame.sprite.Sprite):
@@ -275,6 +288,9 @@ while running:
     snowball_list.update(player_list)
     snowball_list.draw(win)
     rectangle_list.draw(win)
+
+    win.blit(left_text, left_rect)
+    win.blit(right_text, right_rect)
 
     pygame.display.update()
 
