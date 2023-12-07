@@ -71,8 +71,19 @@ class Player(pygame.sprite.Sprite):
         self.y_vel = 0
         self.radius = 30
         self.last_thrown = 0
+        # self.invisible should NOT be relied upon for checking status
+        self.invisible = False
 
     def update(self, other_players):
+        if self.invisible:
+            self.rect.centerx = -self.rect.centerx
+            self.rect.centery = -self.rect.centery
+        if self.last_thrown < time.time():
+            self.invisible = False
+        else:
+            # achieves flashing effect
+            self.invisible = (self.last_thrown - time.time()) % 1 > 0.5:
+
         self.x_vel = pygame.joystick.Joystick(self.number).get_axis(0) * 10
         self.y_vel = pygame.joystick.Joystick(self.number).get_axis(1) * 10
         if pygame.joystick.Joystick(self.number).get_button(2) and self.last_thrown + throwing_cooldown < time.time():
@@ -103,8 +114,15 @@ class Player(pygame.sprite.Sprite):
         
         self.rect.centerx = next_x
         self.rect.centery = next_y
+        if self.invisible:
+            self.rect.centerx = -self.rect.centerx
+            self.rect.centery = -self.rect.centery
 
     def on_hit(self):
+        self.last_thrown = time.time() + 3
+        self.invisible = True
+        self.rect.centerx = -self.rect.centerx
+        self.rect.centery = -self.rect.centery
         return
 
 class Snowball(pygame.sprite.Sprite):
