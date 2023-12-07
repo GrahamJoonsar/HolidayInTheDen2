@@ -16,14 +16,14 @@ pygame.display.set_caption("Snowball Fight!")
 
 # Initializing the font, we may have to change the font size
 pygame.font.init()
-font = pygame.font.SysFont('Comic Sans MS', 30)
-left_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+font = pygame.font.Font(pygame.font.match_font("slkscr.ttf", 0, 0), 90)
+left_text = font.render("0", True, (255, 255, 255), (0, 0, 255))
 left_rect = left_text.get_rect()
-left_rect.center = (window_width/4, 20)
+left_rect.center = (window_width/10, 35)
 
-right_text = font.render("0", True, (255, 255, 255), (0, 0, 0))
+right_text = font.render("0", True, (255, 255, 255), (255, 0, 0))
 right_rect = right_text.get_rect()
-right_rect.center = (3*window_width/4, 20)
+right_rect.center = (9*window_width/10, 35)
 
 num_players = 8
 throwing_cooldown = 1
@@ -158,12 +158,12 @@ class Player(pygame.sprite.Sprite):
             self.invisible = True
             if self.side == LEFT:
                 right_score += 1
-                right_text = font.render(str(right_score), True, (255, 255, 255), (0, 0, 0))
-                right_rect.center = (3*window_width/4, 20)
+                right_text = font.render(str(right_score), True, (255, 255, 255), (255, 0, 0))
+                right_rect.center = (9*window_width/10, 35)
             elif self.side == RIGHT:
                 left_score += 1
-                left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 0))
-                left_rect.center = (window_width/4, 20)
+                left_text = font.render(str(left_score), True, (255, 255, 255), (0, 0, 255))
+                left_rect.center = (window_width/10, 35)
 
         self.last_thrown = time.time() + 3
 
