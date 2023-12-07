@@ -62,7 +62,10 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, side, number, image):
         # Pygame and image stuff
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(image, (185, 185))
+        self.original_image = pygame.transform.scale(image, (185, 185))
+        self.flashed_image = self.original_image.copy()
+        self.flashed_image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
+        self.image = self.original_image
         self.rect = self.image.get_rect()
 
         self.rect.center = (x, y)
@@ -77,11 +80,16 @@ class Player(pygame.sprite.Sprite):
         self.last_thrown = 0
         # self.invisible should NOT be relied upon for checking status
         self.invisible = False
+        self.last_invisible = self.invisible
 
     def update(self, other_players, rect_bars, circ_bars):
-        if self.invisible:
-            self.rect.centerx = -self.rect.centerx
-            self.rect.centery = -self.rect.centery
+        if self.invisible != self.last_invisible:
+            if self.invisible:
+                self.image = self.flashed_image
+            else:
+                self.image = self.original_image
+
+        self.last_invisible = self.invisible
         if self.last_thrown < time.time():
             self.invisible = False
         else:
@@ -132,15 +140,11 @@ class Player(pygame.sprite.Sprite):
         
         self.rect.centerx = next_x
         self.rect.centery = next_y
-        if self.invisible:
-            self.rect.centerx = -self.rect.centerx
-            self.rect.centery = -self.rect.centery
 
     def on_hit(self):
+        global left_score, right_score
         self.last_thrown = time.time() + 3
         self.invisible = True
-        self.rect.centerx = -self.rect.centerx
-        self.rect.centery = -self.rect.centery
   
         if self.side == LEFT:
             right_score += 1
